@@ -2,6 +2,26 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import DynamicTable from './DynamicTable';
 
+// Определяем видимые поля
+const columnsToShow = [
+  "mam",
+  "nomer",
+  "razn_od_id_pricep",
+  "fio_id",
+  "req_name",
+  "tip",
+  "grafik",
+  "tip_pl",
+  "norm_zapr",
+  "nak",
+  "del",
+  "vid_perev",
+  "vid_soob",
+  "rare_use",
+  "enable_find_fine",
+  "from_1c_id"
+];
+
 const PostRequestComponent: React.FC = () => {
   const [data, setData] = useState<any[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +61,7 @@ const PostRequestComponent: React.FC = () => {
       const token = btoa(`${username}:${password}`);
 
       const requestData = {
-        operation: "update_data", // Предположим, необходимо указать другую операцию
+        operation: "update_data", // Здесь указываем нужную операцию
         params: updatedData
       };
 
@@ -69,7 +89,8 @@ const PostRequestComponent: React.FC = () => {
       {data && (
         <div style={{ marginTop: '20px', padding: '10px', border: '1px solid #000', borderRadius: '5px', backgroundColor: '#f9f9f9' }}>
           <h3>Ответ от сервера:</h3>
-          <DynamicTable data={data} onSave={handleSave} />
+          {/* Передаем данные и видимые поля в таблицу */}
+          <DynamicTable data={data} onSave={handleSave} visibleFields={columnsToShow} />
         </div>
       )}
     </div>

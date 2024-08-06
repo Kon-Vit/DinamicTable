@@ -7,9 +7,10 @@ interface DataRow {
 interface DynamicTableProps {
   data: DataRow[];
   onSave: (updatedData: DataRow[]) => void; // Функция для сохранения данных
+  visibleFields: string[]; // Новый пропс для указания видимых полей
 }
 
-const DynamicTable: React.FC<DynamicTableProps> = ({ data, onSave }) => {
+const DynamicTable: React.FC<DynamicTableProps> = ({ data, onSave, visibleFields }) => {
   const [editableData, setEditableData] = useState<DataRow[]>(data);
 
   const handleChange = (rowIndex: number, colKey: string, value: string) => {
@@ -26,7 +27,8 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ data, onSave }) => {
     return <div>Нет данных для отображения</div>;
   }
 
-  const headers = Object.keys(data[0]);
+  // Используем visibleFields напрямую, без фильтрации
+  const headers = visibleFields; // Все указанные поля в visibleFields
 
   return (
     <>
@@ -34,7 +36,7 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ data, onSave }) => {
         <thead>
           <tr>
             {headers.map((header) => (
-              <th key={header} style={{ border: '1px solid #ccc', padding: '8px' }}>
+              <th key={header} style={{ border: 'none', padding: '8px' }}>
                 {header}
               </th>
             ))}
@@ -44,11 +46,12 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ data, onSave }) => {
           {editableData.map((row, rowIndex) => (
             <tr key={rowIndex}>
               {headers.map((header) => (
-                <td key={header} style={{ border: '1px solid #ccc', padding: '8px' }}>
+                <td key={header} style={{ border: 'none', padding: '8px' }}>
                   <input
                     type="text"
                     value={row[header] !== null ? row[header] : ''}
                     onChange={(e) => handleChange(rowIndex, header, e.target.value)}
+                    style={{ width: '100%', border: 'none', outline: 'none' }} // убираем бордер у input
                   />
                 </td>
               ))}
