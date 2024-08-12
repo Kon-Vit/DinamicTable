@@ -1,34 +1,59 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-interface DataRow {
-  [key: string]: any;
+
+interface Item {
+  mam: string;
+  nomer: string;
+  razn_od_id_pricep: number;
+  fio_id: number;
+  req_name: string;
+  tip: string;
+  grafik: string;
+  mk: string;
+  tip_pl: string;
+  norm_zapr: number;
+  nak: string;
+  del: boolean;
+  vid_perev: string;
+  vid_soob: string;
+  rare_use: boolean;
+  enable_find_fine: boolean;
+  from_1c_id: number;
+  [key: string]: any; // Позволяет индексацию
 }
 
+// interface DataRow {
+//   [key: string]: any;
+// }
+
 interface DynamicTableProps {
-  data: DataRow[];
-  onSave: (updatedData: DataRow[]) => void; // Функция для сохранения данных
-  visibleFields: string[]; // Новый пропс для указания видимых полей
+  data: Item[];
+  onSave: (updatedData: Item[]) => void;
+  visibleFields: { [key: string]: number };
 }
 
 const DynamicTable: React.FC<DynamicTableProps> = ({ data, onSave, visibleFields }) => {
-  const [editableData, setEditableData] = useState<DataRow[]>(data);
+  const [editableData, setEditableData] = useState<Item[]>(data);
+
+  useEffect(() => {
+    setEditableData(data);
+  }, [data]);
 
   const handleChange = (rowIndex: number, colKey: string, value: string) => {
     const updatedData = [...editableData];
-    updatedData[rowIndex][colKey] = value; // Обновляем значение в редактируемом состоянии
+    updatedData[rowIndex][colKey] = value;
     setEditableData(updatedData);
   };
 
   const handleSave = () => {
-    onSave(editableData); // Вызываем функцию для сохранения обновленных данных
+    onSave(editableData);
   };
 
   if (!data || data.length === 0) {
     return <div>Нет данных для отображения</div>;
   }
 
-  // Используем visibleFields напрямую, без фильтрации
-  const headers = visibleFields; // Все указанные поля в visibleFields
+  const headers = Object.keys(data[0]);
 
   return (
     <>
@@ -36,7 +61,7 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ data, onSave, visibleFields
         <thead>
           <tr>
             {headers.map((header) => (
-              <th key={header} style={{ border: 'none', padding: '8px' }}>
+              <th key={header} style={{ border: 'none', padding: '8px', backgroundColor: '#f9f9f9', width: `${visibleFields[header] || 100}px` }}>
                 {header}
               </th>
             ))}
@@ -46,12 +71,19 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ data, onSave, visibleFields
           {editableData.map((row, rowIndex) => (
             <tr key={rowIndex}>
               {headers.map((header) => (
-                <td key={header} style={{ border: 'none', padding: '8px' }}>
+                <td key={header} style={{ border: 'none', padding: '8px', backgroundColor: '#f9f9f9', wordBreak: 'break-word', whiteSpace: 'normal' }}>
                   <input
                     type="text"
                     value={row[header] !== null ? row[header] : ''}
                     onChange={(e) => handleChange(rowIndex, header, e.target.value)}
-                    style={{ width: '100%', border: 'none', outline: 'none' }} // убираем бордер у input
+                    style={{
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      width: '100%',
+                      padding: '5px',
+                      outline: 'none',
+                      overflow: 'hidden',
+                    }}
                   />
                 </td>
               ))}
