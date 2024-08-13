@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 
-
 interface Item {
   mam: string;
   nomer: string;
@@ -19,20 +18,17 @@ interface Item {
   rare_use: boolean;
   enable_find_fine: boolean;
   from_1c_id: number;
-  [key: string]: any; // Позволяет индексацию
+  [key: string]: any;
 }
-
-// interface DataRow {
-//   [key: string]: any;
-// }
 
 interface DynamicTableProps {
   data: Item[];
   onSave: (updatedData: Item[]) => void;
   visibleFields: { [key: string]: number };
+  fieldDescriptions: { [key: string]: string };
 }
 
-const DynamicTable: React.FC<DynamicTableProps> = ({ data, onSave, visibleFields }) => {
+const DynamicTable: React.FC<DynamicTableProps> = ({ data, onSave, visibleFields, fieldDescriptions }) => {
   const [editableData, setEditableData] = useState<Item[]>(data);
 
   useEffect(() => {
@@ -62,7 +58,7 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ data, onSave, visibleFields
           <tr>
             {headers.map((header) => (
               <th key={header} style={{ border: 'none', padding: '8px', backgroundColor: '#f9f9f9', width: `${visibleFields[header] || 100}px` }}>
-                {header}
+                {fieldDescriptions[header] || header} {/* Используем поле описания или имя поля по умолчанию */}
               </th>
             ))}
           </tr>
