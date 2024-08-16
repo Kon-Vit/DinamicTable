@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import DynamicTable from './DynamicTable';
 
+
 interface Item {
   mam: string;
   nomer: string;
@@ -109,7 +110,7 @@ const PostRequestComponent: React.FC = () => {
 
   return (
     <div style={{ padding: '20px' }}>
-      <button onClick={handleSubmit}>Отправить POST запрос</button>
+      <button  onClick={handleSubmit}>Отправить POST запрос</button>
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {data && (
         <div style={{ marginTop: '20px', padding: '10px', backgroundColor: '#f9f9f9' }}>
