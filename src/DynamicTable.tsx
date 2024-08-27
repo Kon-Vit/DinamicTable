@@ -1,44 +1,32 @@
 import React, { useState, useEffect } from 'react';
-
-interface Item {
-  mam: string;
-  nomer: string;
-  razn_od_id_pricep: number;
-  fio_id: number;
-  req_name: string;
-  tip: string;
-  grafik: string;
-  mk: string;
-  tip_pl: string;
-  norm_zapr: number;
-  nak: string;
-  del: boolean;
-  vid_perev: string;
-  vid_soob: string;
-  rare_use: boolean;
-  enable_find_fine: boolean;
-  from_1c_id: number;
-  [key: string]: any;
-}
+import { Table, Button } from 'antd';
+import { ColumnType } from 'antd/es/table';
+import EditableCell from './EditableCell';
 
 interface DynamicTableProps {
-  data: Item[];
-  onSave: (updatedData: Item[]) => void;
-  visibleFields: { [key: string]: number };
-  fieldDescriptions: { [key: string]: string };
+  data: any[];
+  onSave: (updatedData: any[]) => void;
+  columns: ColumnType<any>[]; // Теперь получаем готовые колонки
 }
 
-const DynamicTable: React.FC<DynamicTableProps> = ({ data, onSave, visibleFields, fieldDescriptions }) => {
-  const [editableData, setEditableData] = useState<Item[]>(data);
-  const [originalData, setOriginalData] = useState<Item[]>(data);
+const DynamicTable: React.FC<DynamicTableProps> = ({ data, onSave, columns }) => {
+  const [editableData, setEditableData] = useState<any[]>(data);
+  const [originalData, setOriginalData] = useState<any[]>(data);
   const [selectedRowIndex, setSelectedRowIndex] = useState<number | null>(null);
+  const [hasChanges, setHasChanges] = useState<boolean>(false);
 
   useEffect(() => {
     setEditableData(data);
     setOriginalData(data);
+    setHasChanges(false);
   }, [data]);
 
-  const handleChange = (rowIndex: number, colKey: string, value: string | boolean) => {
+  useEffect(() => {
+    const isModified = JSON.stringify(editableData) !== JSON.stringify(originalData);
+    setHasChanges(isModified);
+  }, [editableData, originalData]);
+
+  const handleChange = (rowIndex: number, colKey: string, value: any) => {
     const updatedData = [...editableData];
     updatedData[rowIndex][colKey] = value;
     setEditableData(updatedData);
@@ -53,25 +41,16 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ data, onSave, visibleFields
   };
 
   const handleAdd = () => {
-    const newItem: Item = {
-      mam: '',
-      nomer: '',
-      razn_od_id_pricep: 0,
-      fio_id: 0,
-      req_name: '',
-      tip: '',
-      grafik: '',
-      mk: '',
-      tip_pl: '',
-      norm_zapr: 0,
-      nak: '',
-      del: false,
-      vid_perev: '',
-      vid_soob: '',
-      rare_use: false,
-      enable_find_fine: false,
-      from_1c_id: 0,
-    };
+    const newItem = {} as any;
+
+    // Обходим колонки, проверяем тип ключа и задаем значения новому элементу
+    columns.forEach((column) => {
+      const columnKey = column.key as string; // Приводим ключ колонки к строковому типу
+      if (columnKey !== undefined && typeof columnKey === 'string') {
+        newItem[columnKey] = typeof editableData[0]?.[columnKey] === 'boolean' ? false : '';
+      }
+    });
+
     const updatedData = [...editableData, newItem];
     setEditableData(updatedData);
   };
@@ -88,69 +67,39 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ data, onSave, visibleFields
     return <div>Нет данных для отображения</div>;
   }
 
-  const headers = Object.keys(data[0]);
-
   return (
     <>
-      <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
-        <thead>
-          <tr>
-            {headers.map((header) => (
-              <th key={header} style={{ border: 'none', padding: '8px', backgroundColor: '#f9f9f9', width: `${visibleFields[header] || 100}px` }}>
-                {fieldDescriptions[header] || header}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-  {editableData.map((row, rowIndex) => (
-    <tr 
-      key={rowIndex} 
-      onClick={() => setSelectedRowIndex(rowIndex)} // Это устанавливает выбранную строку
-      style={{ 
-        cursor: 'pointer', 
-        backgroundColor: selectedRowIndex === rowIndex ? '#add8e6' : 'transparent' // Подсветка
-      }}
-    >
-      {headers.map((header) => (
-        <td key={header} style={{ border: 'none', padding: '8px' }}>
-          {typeof row[header] === 'boolean' ? (
-            <input
-              type="checkbox"
-              checked={row[header] === true}
-              onChange={(e) => handleChange(rowIndex, header, e.target.checked)}
-              style={{
-                cursor: 'pointer',
-              }}
-            />
-          ) : (
-            <input
-              type="text"
-              value={row[header] !== null ? row[header] : ''}
-              onChange={(e) => handleChange(rowIndex, header, e.target.value)}
-              style={{
-                backgroundColor: 'transparent',
-                border: 'none',
-                width: '100%',
-                padding: '5px',
-                outline: 'none',
-              }}
-            />
-          )}
-        </td>
-      ))}
-    </tr>
-  ))}
-</tbody>
-      </table>
+      <Table
+        dataSource={editableData}
+        columns={columns}
+        rowKey={(record) => {
+          return (
+            record.key ||
+            record.id ||
+            Math.random().toString(36).substr(2, 9)
+          );
+        }}
+        onRow={(record, rowIndex) => ({
+          onClick: () => setSelectedRowIndex(rowIndex !== undefined ? rowIndex : null),
+          style: {
+            cursor: 'pointer',
+            backgroundColor: selectedRowIndex === rowIndex ? '#add8e6' : 'transparent',
+          },
+        })}
+        pagination={false}
+      />
       <div style={{ marginTop: '10px' }}>
-        <button onClick={handleAdd} style={{ marginRight: '10px' }}>Добавить</button>
-        <button onClick={handleDelete} style={{ marginRight: '10px' }}>Удалить</button>
-        <button onClick={handleReset}>Сброс</button>
+        <Button onClick={handleAdd} style={{ marginRight: '10px' }}>Добавить</Button>
+        <Button onClick={handleDelete} style={{ marginRight: '10px' }}>Удалить</Button>
+        <Button onClick={handleReset}>Сброс</Button>
       </div>
-      <button onClick={handleSave} style={{ marginTop: '10px' }}>
+      <Button 
+        onClick={handleSave} 
+        style={{ marginTop: '10px' }} 
+        disabled={!hasChanges}
+      >
         Сохранить изменения
-      </button>
+      </Button>
     </>
   );
 };
