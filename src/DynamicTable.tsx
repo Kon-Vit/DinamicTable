@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button } from 'antd';
 import { ColumnType } from 'antd/es/table';
-import EditableCell from './EditableCell';
 
 interface DynamicTableProps {
   data: any[];
   onSave: (updatedData: any[]) => void;
-  columns: ColumnType<any>[]; // Теперь получаем готовые колонки
+  columns: ColumnType<any>[];
 }
 
 const DynamicTable: React.FC<DynamicTableProps> = ({ data, onSave, columns }) => {
@@ -26,12 +25,6 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ data, onSave, columns }) =>
     setHasChanges(isModified);
   }, [editableData, originalData]);
 
-  const handleChange = (rowIndex: number, colKey: string, value: any) => {
-    const updatedData = [...editableData];
-    updatedData[rowIndex][colKey] = value;
-    setEditableData(updatedData);
-  };
-
   const handleDelete = () => {
     if (selectedRowIndex !== null) {
       const updatedData = editableData.filter((_, index) => index !== selectedRowIndex);
@@ -42,15 +35,12 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ data, onSave, columns }) =>
 
   const handleAdd = () => {
     const newItem = {} as any;
-
-    // Обходим колонки, проверяем тип ключа и задаем значения новому элементу
     columns.forEach((column) => {
-      const columnKey = column.key as string; // Приводим ключ колонки к строковому типу
-      if (columnKey !== undefined && typeof columnKey === 'string') {
-        newItem[columnKey] = typeof editableData[0]?.[columnKey] === 'boolean' ? false : '';
+      const columnKey = column.dataIndex as string;
+      if (columnKey) {
+        newItem[columnKey] = ''; // Создаем пустое поле для каждого dataIndex
       }
     });
-
     const updatedData = [...editableData, newItem];
     setEditableData(updatedData);
   };
@@ -72,13 +62,7 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ data, onSave, columns }) =>
       <Table
         dataSource={editableData}
         columns={columns}
-        rowKey={(record) => {
-          return (
-            record.key ||
-            record.id ||
-            Math.random().toString(36).substr(2, 9)
-          );
-        }}
+        rowKey={(record) => record.key || Math.random().toString(36).substr(2, 9)} // Убедитесь, что key уникален
         onRow={(record, rowIndex) => ({
           onClick: () => setSelectedRowIndex(rowIndex !== undefined ? rowIndex : null),
           style: {
