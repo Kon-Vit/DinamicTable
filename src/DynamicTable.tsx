@@ -1,90 +1,40 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Table, Button } from 'antd';
-import { ColumnType } from 'antd/es/table';
+import { ColumnModel, DataSourceModel } from './models';
 
 interface DynamicTableProps {
-  data: any[];
-  onSave: (updatedData: any[]) => void;
-  columns: ColumnType<any>[];
+  data: DataSourceModel[];
+  columns: ColumnModel[];
+  onSave: (data: DataSourceModel[]) => void;
 }
 
-const DynamicTable: React.FC<DynamicTableProps> = ({ data, onSave, columns }) => {
-  const [editableData, setEditableData] = useState<any[]>(data);
-  const [originalData, setOriginalData] = useState<any[]>(data);
-  const [selectedRowIndex, setSelectedRowIndex] = useState<number | null>(null);
-  const [hasChanges, setHasChanges] = useState<boolean>(false);
-
-  useEffect(() => {
-    setEditableData(data);
-    setOriginalData(data);
-    setHasChanges(false);
-  }, [data]);
-
-  useEffect(() => {
-    const isModified = JSON.stringify(editableData) !== JSON.stringify(originalData);
-    setHasChanges(isModified);
-  }, [editableData, originalData]);
-
-  const handleDelete = () => {
-    if (selectedRowIndex !== null) {
-      const updatedData = editableData.filter((_, index) => index !== selectedRowIndex);
-      setEditableData(updatedData);
-      setSelectedRowIndex(null);
-    }
-  };
-
-  const handleAdd = () => {
-    const newItem = {} as any;
-    columns.forEach((column) => {
-      const columnKey = column.dataIndex as string;
-      if (columnKey) {
-        newItem[columnKey] = ''; // Создаем пустое поле для каждого dataIndex
-      }
-    });
-    const updatedData = [...editableData, newItem];
-    setEditableData(updatedData);
-  };
-
-  const handleReset = () => {
-    setEditableData(originalData);
-  };
-
+const DynamicTable: React.FC<DynamicTableProps> = ({ data, columns, onSave }) => {
   const handleSave = () => {
-    onSave(editableData);
+    onSave(data);
   };
 
-  if (!data || data.length === 0) {
-    return <div>Нет данных для отображения</div>;
-  }
+  const antColumns = columns.map(column => ({
+    title: column.title || column.key,
+    dataIndex: column.dataIndex,
+    key: column.key,
+    render: column.render
+      ? (text: any, record: any) => {
+          return typeof column.render === 'function'
+            ? column.render(text, record)
+            : text;
+        }
+      : (text: any) => text,
+  }));
 
   return (
-    <>
+    <div>
       <Table
-        dataSource={editableData}
-        columns={columns}
-        rowKey={(record) => record.key || Math.random().toString(36).substr(2, 9)} // Убедитесь, что key уникален
-        onRow={(record, rowIndex) => ({
-          onClick: () => setSelectedRowIndex(rowIndex !== undefined ? rowIndex : null),
-          style: {
-            cursor: 'pointer',
-            backgroundColor: selectedRowIndex === rowIndex ? '#add8e6' : 'transparent',
-          },
-        })}
-        pagination={false}
+        dataSource={data}
+        columns={antColumns}
+        rowKey={(record: any) => record.key || record.id}
       />
-      <div style={{ marginTop: '10px' }}>
-        <Button onClick={handleAdd} style={{ marginRight: '10px' }}>Добавить</Button>
-        <Button onClick={handleDelete} style={{ marginRight: '10px' }}>Удалить</Button>
-        <Button onClick={handleReset}>Сброс</Button>
-      </div>
-      <Button 
-        onClick={handleSave} 
-        style={{ marginTop: '10px' }} 
-        disabled={!hasChanges}
-      >
-        Сохранить изменения
-      </Button>
-    </>
+      <Button onClick={handleSave} style={{ marginTop: 10 }}>Save</Button>
+    </div>
   );
 };
 
