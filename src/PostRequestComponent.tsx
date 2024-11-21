@@ -1,63 +1,89 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { ApiResponse, ColumnModel, DataSourceModel } from './models';
+import type { ApiResponse, ColumnModel, DataSourceModel, Catalog } from './models';
 import DynamicTable from './DynamicTable';
 
 const PostRequestComponent: React.FC = () => {
-  const [columns, setColumns] = useState<ColumnModel[]>([]);
-  const [data, setData] = useState<DataSourceModel[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [columns, setColumns] = useState<ColumnModel[]>([]); // Колонки для таблицы
+  const [data, setData] = useState<DataSourceModel[]>([]); // Данные для таблицы
+  const [catalog, setCatalog] = useState<Catalog | null>(null); // Справочник
+  const [loading, setLoading] = useState(false); // Индикатор загрузки
+  const [error, setError] = useState<string | null>(null); // Ошибка
 
-  const fetchData = async (): Promise<void> => {
+  // Функция для получения данных
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
     try {
+      // Авторизация
       const username = 'sirius220@yandex.ru';
       const password = 'qwe';
       const token = btoa(`${username}:${password}`);
 
+      // Тело запроса
       const requestData = {
-        operation: "razn_od",
+        operation: 'razn_od',
         params: [1, null, null],
       };
 
-      const response = await axios.post<ApiResponse>('http://87.103.198.92:5544/read_data', requestData, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${token}`,
-        },
-      });
+      // Отправка запроса на сервер
+      const response = await axios.post<ApiResponse>(
+        'http://87.103.198.92:5544/read_data',
+        requestData,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Basic ${token}`,
+          },
+        }
+      );
 
       const apiResponse = response.data;
 
-      console.log('API Response:', apiResponse);
-
-      // Проверка наличия необходимых данных в ответе API
-      if (!apiResponse.columns || !apiResponse.dataSource) {
-        throw new Error('Необходимые данные отсутствуют в ответе API');
+      // Проверка наличия необходимых данных в ответе
+      if (!apiResponse.columns || !apiResponse.dataSource || !apiResponse.catalog) {
+        throw new Error('Некорректный ответ сервера');
       }
 
-      // Установка данных в состояние
-      setColumns(apiResponse.columns || []);
-      setData(apiResponse.dataSource || []);
-      setError(null);
+      // Обновление состояния с полученными данными
+      setColumns(apiResponse.columns);
+      setData(apiResponse.dataSource);
+      setCatalog(apiResponse.catalog);
     } catch (err) {
-      console.error('Ошибка при отправке запроса:', err);
-      setError(err instanceof Error ? err.message : 'Произошла ошибка при отправке запроса');
+      console.error(err);
+
+      // Установка сообщения об ошибке
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Произошла неизвестная ошибка при загрузке данных'
+      );
+    } finally {
+      setLoading(false); // Завершение загрузки
     }
-  };
-
-  const handleFetchClick = () => {
-    fetchData();
-  };
-
-  const handleSave = (updatedData: DataSourceModel[]) => {
-    console.log('Updated Data:', updatedData);
   };
 
   return (
     <div>
-      {error && <div className="error">{error}</div>}
-      <button onClick={handleFetchClick}>Запросить данные</button>
-      <DynamicTable data={data} columns={columns} onSave={handleSave} />
+      {/* Кнопка для загрузки данных */}
+      <button onClick={fetchData} disabled={loading} style={{ marginBottom: '20px' }}>
+        {loading ? 'Загрузка...' : 'Загрузить данные'}
+      </button>
+
+      {/* Сообщение об ошибке */}
+      {error && <div style={{ color: 'red', marginBottom: '20px' }}>{error}</div>}
+
+      {/* Рендеринг таблицы только при наличии данных */}
+      {catalog && columns.length > 0 && data.length > 0 && (
+        <DynamicTable
+          data={data}
+          columns={columns}
+          catalog={catalog}
+          onSave={(updatedData) => {
+            console.log('Сохраненные данные:', updatedData);
+          }}
+        />
+      )}
     </div>
   );
 };
