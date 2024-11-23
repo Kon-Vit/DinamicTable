@@ -1,71 +1,58 @@
-.App {
-  text-align: center;
+/* Убираем бордеры у всей таблицы */
+.ant-table {
+  border: none !important;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.ant-table-container {
+  border: none !important;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.ant-table-content {
+  border: none !important;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+/* Убираем бордеры у ячеек таблицы */
+.ant-table-cell {
+  border: none !important;
 }
 
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Убираем границы и фон у инпута */
+/* Убираем границы и фон у инпутов */
 .input-no-border {
-  border: none;
-  padding: 0;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
   width: 100%;
-  background: transparent;
-  outline: none;
-  text-overflow: ellipsis; /* Обрезка текста многоточием */
-  white-space: nowrap; /* Запрет на перенос текста */
-  overflow: hidden; /* Скрытие выходящего за пределы текста */
-}
-
-/* Увеличиваем ширину Input для лучшей читаемости */
-.input-no-border:focus {
-  outline: none; /* Убираем обводку при фокусе */
-}
-
-/* Увеличиваем ширину Input для колонок "Марка" и "Гос номер" */
-.input-expanded {
-  border: none;
+  height: 100%;
   padding: 0;
-  width: 200%; /* Увеличиваем ширину в два раза */
-  background: transparent;
   outline: none;
   text-overflow: ellipsis;
-  white-space: nowrap;
   overflow: hidden;
+  white-space: nowrap;
 }
 
-.input-expanded:focus {
-  outline: none; /* Убираем обводку при фокусе */
+/* При фокусе инпута */
+.input-no-border:focus {
+  border: 1px solid #1890ff; /* Голубая граница при фокусе */
+  background: #f5f5f5; /* Светлый фон при фокусе */
+  outline: none;
+  box-shadow: none !important;
+}
+
+/* Убираем бордеры у Select */
+.ant-select-selector {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* Сбрасываем фон при наведении */
+.ant-select:hover .ant-select-selector {
+  background: transparent !important;
+}
+
+/* Сбрасываем фон при фокусе */
+.ant-select-focused .ant-select-selector {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
 }

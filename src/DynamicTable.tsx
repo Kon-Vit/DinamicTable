@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { Table, Button, Select, Checkbox, Input } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Table, Button, Input, Select, Checkbox } from 'antd';
 import { ColumnModel, DataSourceModel, Catalog } from './models';
-import './App.css'; // Подключаем глобальный файл стилей
+import './App.css';
+
+const { Option } = Select;
 
 interface DynamicTableProps {
   data: DataSourceModel[];
@@ -16,23 +18,45 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
   catalog,
   onSave,
 }) => {
-  const [editedData, setEditedData] = useState<DataSourceModel[]>(data);
+  const [editedData, setEditedData] = useState<DataSourceModel[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
 
-  // Обновление значения ячейки
+  useEffect(() => {
+    const initializedData = data.map((item) => ({
+      ...item,
+      fio: getCatalogValue('fio_id', item.fio_id),
+      razn_t_t_name: getCatalogValue('razn_t_t_id', item.razn_t_t_id),
+      razn_shabl_pl_name: getCatalogValue('razn_shabl_pl_id', item.razn_shabl_pl_id),
+      razn_nak_name: getCatalogValue('razn_nak_id', item.razn_nak_id),
+    }));
+    setEditedData(initializedData);
+  }, [data, catalog]);
+
   const handleEdit = (rowIndex: number, colKey: string, value: any) => {
     const updatedData = [...editedData];
-    (updatedData[rowIndex] as any)[colKey] = value;
+    updatedData[rowIndex][colKey] = value;
+
+    if (colKey === 'fio_id') {
+      updatedData[rowIndex].fio = getCatalogValue('fio_id', value);
+    }
+    if (colKey === 'razn_t_t_id') {
+      updatedData[rowIndex].razn_t_t_name = getCatalogValue('razn_t_t_id', value);
+    }
+    if (colKey === 'razn_shabl_pl_id') {
+      updatedData[rowIndex].razn_shabl_pl_name = getCatalogValue('razn_shabl_pl_id', value);
+    }
+    if (colKey === 'razn_nak_id') {
+      updatedData[rowIndex].razn_nak_name = getCatalogValue('razn_nak_id', value);
+    }
+
     setEditedData(updatedData);
   };
 
-  // Сохранение изменений
   const handleSave = () => {
     onSave(editedData);
   };
 
-  // Пагинация
   const handlePaginationChange = (page: number, size?: number) => {
     setCurrentPage(page);
     if (size) {
@@ -40,139 +64,151 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
     }
   };
 
-  // Функция для получения текста из catalog
   const getCatalogValue = (
     catalogKey: keyof Catalog,
-    itemKey: string,
-    valueKey: string,
-    value: any
+    value: number | null | undefined
   ): string => {
-    const catalogItems = catalog[catalogKey] || [];
-    const foundItem = catalogItems.find((item: any) => item[itemKey] === value);
-    return foundItem ? foundItem[valueKey] : value;
+    if (!value) return '';
+
+    const catalogList = catalog[catalogKey] || [];
+    const matchedItem = catalogList.find(
+      (item: any) => item.key === value || item.razn_nak_key === value
+    );
+    return (
+      matchedItem?.name ||
+      matchedItem?.fio ||
+      matchedItem?.t_t ||
+      matchedItem?.shabl_name ||
+      matchedItem?.name_ak ||
+      ''
+    );
   };
 
-  // Генерация колонок таблицы
+  const renderSelect = (
+    catalogKey: keyof Catalog,
+    record: DataSourceModel,
+    dataIndex: string,
+    rowIndex: number,
+    placeholder: string
+  ) => {
+    const options = catalog[catalogKey] || [];
+    return (
+      <Select
+        value={record[dataIndex]}
+        onChange={(value) => handleEdit(rowIndex, dataIndex, value)}
+        style={{ width: '100%', background: 'transparent' }}
+        placeholder={placeholder}
+        className="ant-select-no-border" // Добавляем класс для удаления бордера
+      >
+        {options.map((item: any) => (
+          <Option
+            key={
+              item.key ||
+              item.fio_key ||
+              item.razn_t_t_key ||
+              item.razn_shabl_pl_key ||
+              item.razn_nak_key
+            }
+            value={
+              item.key ||
+              item.fio_key ||
+              item.razn_t_t_key ||
+              item.razn_shabl_pl_key ||
+              item.razn_nak_key
+            }
+          >
+            {item.name ||
+              item.fio ||
+              item.t_t ||
+              item.shabl_name ||
+              item.name_ak ||
+              ''}
+          </Option>
+        ))}
+      </Select>
+    );
+  };
+
+  const renderCheckbox = (
+    record: DataSourceModel,
+    dataIndex: string,
+    rowIndex: number
+  ) => {
+    return (
+      <Checkbox
+        checked={record[dataIndex]}
+        onChange={(e) => handleEdit(rowIndex, dataIndex, e.target.checked)}
+      />
+    );
+  };
+
   const antColumns = columns.map((column) => {
     return {
       title: column.title || column.key,
       dataIndex: column.dataIndex,
       key: column.key,
       render: (text: any, record: DataSourceModel, index: number) => {
-        // Поле с типом данных boolean — рендерим Checkbox
         if (column.data_type === 'boolean') {
-          return (
-            <Checkbox
-              checked={!!record[column.dataIndex]}
-              onChange={(e) =>
-                handleEdit(index, column.dataIndex, e.target.checked)
-              }
-            />
-          );
+          return renderCheckbox(record, column.dataIndex, index);
         }
 
-        // Поля, которые используют значения из catalog
-        if (column.dataIndex === 'razn_t_t_id') {
-          return getCatalogValue(
-            'razn_t_t_id',
-            'razn_t_t_key',
-            't_t',
-            record.razn_t_t_id
-          );
-        }
-        if (column.dataIndex === 'razn_shabl_pl_id') {
-          return getCatalogValue(
-            'razn_shabl_pl_id',
-            'razn_shabl_pl_key',
-            'shabl_name',
-            record.razn_shabl_pl_id
-          );
-        }
-        if (column.dataIndex === 'razn_nak_id') {
-          return getCatalogValue(
-            'razn_nak_id',
-            'razn_nak_key',
-            'name_ak',
-            record.razn_nak_id
-          );
-        }
+        switch (column.dataIndex) {
+          case 'fio_id':
+            return (
+              renderSelect(
+                'fio_id',
+                record,
+                column.dataIndex,
+                index,
+                'Выберите водителя'
+              ) || <span>{record.fio}</span>
+            );
 
-        // Поле "fio_id" — рендерим Select, отображая сразу "fio" вместо "fio_key"
-        if (column.dataIndex === 'fio_id') {
-          const selectedFio =
-            catalog.fio_id.find((fio) => fio.fio_key === record.fio_id)?.fio ||
-            '';
+          case 'razn_t_t_id':
+            return (
+              renderSelect(
+                'razn_t_t_id',
+                record,
+                column.dataIndex,
+                index,
+                'Выберите тип автомобиля'
+              ) || <span>{record.razn_t_t_name}</span>
+            );
 
-          return (
-            <Select
-              value={selectedFio} // Отображается значение "fio"
-              onChange={(value) => {
-                const selectedKey = catalog.fio_id.find(
-                  (fio) => fio.fio === value
-                )?.fio_key;
-                handleEdit(index, 'fio_id', selectedKey); // Сохраняем "fio_key" в данных
-              }}
-              style={{ width: '100%' }}
-            >
-              {catalog.fio_id.map((fio) => (
-                <Select.Option key={fio.fio_key} value={fio.fio}>
-                  {fio.fio}
-                </Select.Option>
-              ))}
-            </Select>
-          );
+          case 'razn_shabl_pl_id':
+            return (
+              renderSelect(
+                'razn_shabl_pl_id',
+                record,
+                column.dataIndex,
+                index,
+                'Выберите тип листа'
+              ) || <span>{record.razn_shabl_pl_name}</span>
+            );
+
+          case 'razn_nak_id':
+            return (
+              renderSelect(
+                'razn_nak_id',
+                record,
+                column.dataIndex,
+                index,
+                'Выберите автоколонну'
+              ) || <span>{record.razn_nak_name}</span>
+            );
+
+          default:
+            return (
+              <Input
+                value={record[column.dataIndex]}
+                onChange={(e) =>
+                  handleEdit(index, column.dataIndex, e.target.value)
+                }
+                placeholder={`Введите ${column.title}`}
+                className="input-no-border"
+              />
+            );
         }
-
-        // Поле "вид перевозок" — Input с редактированием
-        if (column.dataIndex === 'vid_perev') {
-          return (
-            <Input
-              value={record.vid_perev}
-              onChange={(e) => handleEdit(index, 'vid_perev', e.target.value)}
-              placeholder="Введите вид перевозок"
-              className="input-no-border" // Без бордера
-            />
-          );
-        }
-
-        // Поле "вид сообщений" — Input с редактированием
-        if (column.dataIndex === 'vid_soob') {
-          return (
-            <Input
-              value={record.vid_soob}
-              onChange={(e) => handleEdit(index, 'vid_soob', e.target.value)}
-              placeholder="Введите вид сообщений"
-              className="input-no-border" // Без бордера
-            />
-          );
-        }
-
-        // Поле с "text" — рендерим Input для редактирования текста
-        if (column.data_type === 'text') {
-          return (
-            <Input
-              value={record[column.dataIndex]} // Текущее значение из данных
-              onChange={(e) =>
-                handleEdit(index, column.dataIndex, e.target.value) // Обновление значения
-              }
-              placeholder="Введите текст"
-              className="input-no-border" // Применяем глобальный класс
-            />
-          );
-        }
-
-        // Остальные типы данных — отображаем текст
-        return (
-          <div>
-            {column.render
-              ? typeof column.render === 'function'
-                ? column.render(text, record, index)
-                : text
-              : typeof text === 'boolean'
-              ? text.toString()
-              : text ?? ''} {/* Отображаем пустую строку для null/undefined */}
-          </div>
-        );
       },
     };
   });
@@ -189,9 +225,10 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
           total: editedData.length,
           onChange: handlePaginationChange,
         }}
+        bordered={false} // Убираем бордеры таблицы
       />
       <Button onClick={handleSave} style={{ marginTop: 10 }}>
-        Save
+        Сохранить
       </Button>
     </div>
   );

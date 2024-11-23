@@ -1,21 +1,11 @@
-export interface Catalog {
-  fio_id: Fio[];
-  razn_nak_id: RaznNak[];
-  razn_od_id_pricep: any[];
-  razn_shabl_pl_id: RaznShablPl[];
-  razn_t_t_id: RaznTT[];
-  vid_perev: VidPerev[];
-  vid_soob: VidSoob[];
-}
-
 export interface Fio {
-  fio: string;
   fio_key: number;
+  fio: string;
 }
 
 export interface RaznNak {
-  name_ak: string;
   razn_nak_key: number;
+  name_ak: string;
 }
 
 export interface RaznShablPl {
@@ -36,6 +26,16 @@ export interface VidSoob {
   vid_perev: string;
 }
 
+export interface Catalog {
+  fio_id: Fio[];
+  razn_nak_id: RaznNak[];
+  razn_od_id_pricep: any[];  // Если структура не определена, оставляем any
+  razn_shabl_pl_id: RaznShablPl[];
+  razn_t_t_id: RaznTT[];
+  vid_perev: VidPerev[];
+  vid_soob: VidSoob[];
+}
+
 export interface ColumnModel {
   title: string; // Заголовок колонки
   dataIndex: string; // Уникальный индекс данных
@@ -48,6 +48,7 @@ export interface ColumnModel {
 export interface DataSourceModel {
   [key: string]: any; // Динамическая структура
 }
+
 
 export interface ApiResponse {
   catalog: Catalog;
