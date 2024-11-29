@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import type { ApiResponse, ColumnModel, DataSourceModel, Catalog } from './models';
 import DynamicTable from './DynamicTable';
+import { message } from 'antd'; // Используем Ant Design для уведомлений
 
 const PostRequestComponent: React.FC = () => {
   const [columns, setColumns] = useState<ColumnModel[]>([]); // Колонки для таблицы
@@ -63,6 +64,37 @@ const PostRequestComponent: React.FC = () => {
     }
   };
 
+  // Функция для сохранения данных
+  const saveData = async (payload: DataSourceModel[]) => {
+    try {
+      const response = await axios.put(
+        'http://87.103.198.92:5544/write_data',
+        payload,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Basic ${btoa('sirius220@yandex.ru:qwe')}`,
+          },
+        }
+      );
+
+      console.log('Ответ сервера:', response);
+
+      if (response.status === 200) {
+        message.success('Данные успешно сохранены!');
+        setData(payload); // Обновляем данные в состоянии
+      } else {
+        throw new Error(`Сервер вернул статус ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Ошибка при сохранении данных:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('Ответ сервера:', error.response?.data);
+      }
+      message.error('Не удалось сохранить данные. Попробуйте снова.');
+    }
+  };
+ 
   return (
     <div>
       {/* Кнопка для загрузки данных */}
@@ -80,7 +112,7 @@ const PostRequestComponent: React.FC = () => {
           columns={columns}
           catalog={catalog}
           onSave={(updatedData) => {
-            console.log('Сохраненные данные:', updatedData);
+            saveData(updatedData); // Сохраняем данные через saveData
           }}
         />
       )}
