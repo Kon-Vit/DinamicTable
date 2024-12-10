@@ -133,6 +133,17 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
     dataIndex: column.dataIndex,
     key: column.key,
     render: (text: any, record: DataSourceModel, index: number) => {
+      // Условие для вывода выпадающего списка
+      if (record.razn_t_t_name === 'Прицеп' || column.title === 'Прицеп') {
+        return renderSelect(
+          'razn_t_t_id',
+          record,
+          column.dataIndex,
+          index,
+          'Выберите прицеп'
+        );
+      }
+
       if (column.data_type === 'boolean') {
         return renderCheckbox(record, column.dataIndex, index);
       }
@@ -191,6 +202,7 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
               }
               placeholder={`Введите ${column.title}`}
               className="input-no-border"
+             
             />
           );
       }
@@ -206,7 +218,7 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
         bordered={false}
         onRow={(record) => ({
           onClick: () => handleRowClick(record),
-          onMouseEnter: () => onRowHover(record.info), // Передаем info на родительский компонент
+          onMouseEnter: () => onRowHover(record.info),
           onMouseLeave: () => onRowHover(null),
         })}
         rowClassName={getRowClassName}

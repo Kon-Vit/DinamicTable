@@ -15,11 +15,20 @@
   width: 100%; /* Таблица занимает всю ширину контейнера */
   height: 100%;
   border: none !important;
+  background-color: #ffffff; /* Единый цвет для всей таблицы */
+  color: #333; /* Цвет текста */
+}
+
+.dynamic-table-container .ant-input {
+  background-color: #f8f8f8 !important; /* Совпадает с фоном таблицы */
+  color: #333 !important; /* Совпадает с текстом таблицы */
+  box-shadow: none !important; /* Убираем тени */
 }
 
 /* Убираем бордеры у ячеек таблицы */
 .ant-table-cell {
   border: none !important;
+  box-shadow: none !important; /* Убираем тени */
 }
 
 /* Кнопки под таблицей */
@@ -30,72 +39,102 @@
   padding: 10px;
 }
 
-.input-no-border {
-  border: none !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  width: 100%;
-  height: 100%;
-  padding: 0;
-  outline: none;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
+/* Уменьшаем высоту строк таблицы */
+.dynamic-table-container .ant-table-tbody > tr > td {
+  padding: 4px 8px; /* Уменьшаем отступы внутри ячеек */
+  line-height: 1.2; /* Высота строки */
+  height: 32px; /* Фиксированная минимальная высота строки */
+  border: none !important; /* Убираем границы ячеек */
+  padding: 0 !important; /* Убираем отступы */
+  margin: 0 !important; /* Убираем внешние отступы */
+  background-color: #ffffff !important; /* Единый цвет фона */
 }
+
+/* Уменьшаем высоту заголовков */
+.dynamic-table-container .ant-table-thead > tr > th {
+  padding: 4px 8px; /* Уменьшаем отступы в заголовке */
+  line-height: 1.2; /* Высота строки заголовка */
+  background-color: #ffffff !important; /* Единый цвет фона */
+}
+
+/* Можно уменьшить размер шрифта для компактности */
+.dynamic-table-container .ant-table-cell {
+  font-size: 12px; /* Размер текста */
+  border: none !important; /* Убираем границы ячеек */
+  box-shadow: none !important; /* Убираем тени */
+  background: transparent !important; /* Прозрачный фон */
+  padding: 0 !important; /* Сбрасываем отступы */
+  margin: 0 !important; /* Сбрасываем внешние отступы */
+  outline: none !important; /* Убираем обводку */
+}
+
+.dynamic-table-container .ant-table-cell .ant-input {
+  border: none !important; /* Убираем границы */
+  background: transparent !important; /* Прозрачный фон */
+  box-shadow: none !important; /* Убираем тени */
+  outline: none !important; /* Убираем обводку */
+  padding: 0 !important; /* Сбрасываем отступы */
+  margin: 0 !important; /* Сбрасываем внешние отступы */
+}
+
+/* Убираем лишние отступы вокруг таблицы */
+.dynamic-table-container .ant-table {
+  margin: 0;
+  padding: 0;
+}
+
+.ant-input.input-no-border {
+  border: none !important; /* Убираем границы */
+  background: transparent !important; /* Прозрачный фон */
+  box-shadow: none !important; /* Убираем тени */
+  outline: none !important; /* Убираем обводку */
+  padding: 0 !important; /* Сбрасываем отступы */
+  margin: 0 !important; /* Сбрасываем внешние отступы */
+}
+
+.ant-input.input-no-border:focus {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+
+
 
 .selected-row {
   background-color: #e6f7ff !important;
 }
 
-/* Новый стиль для фрейма с информацией */
-.info-frame {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: #f0f2f5;
-  padding: 20px;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
-  transform: translateY(100%);
-}
 
-.info-frame.active {
-  transform: translateY(0);
-}
 
-.info-frame h3 {
-  margin: 0;
-  font-size: 18px;
-}
 
-.info-frame p {
-  margin: 5px 0;
-}
-/* Контейнер для таблицы и блока */
-.table-with-hover-info {
-  display: flex;
-  flex-direction: column;
-  height: 100%; /* Высота на весь экран */
+
+
+
+
+
+-------
+.table-with-info-container {
   position: relative;
+  min-height: 200px;
 }
 
-/* Фрейм для информации */
 .info-frame {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: #f0f2f5;
-  padding: 20px;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-  border-top: 1px solid #ddd;
-  z-index: 1000;
-}
-
-/* Контент внутри фрейма */
-.info-content {
-  text-align: center;
-  font-size: 14px;
-  color: #333;
+  position: fixed; /* Фиксируем окно */
+  bottom: 10px; /* Отступ от нижнего края экрана */
+  left: 10px; /* Отступ от левого края */
+  background: #fff; /* Белый фон */
+  padding: 20px; /* Внутренний отступ */
+  border: 1px solid #ccc; /* Рамка вокруг */
+  border-radius: 8px; /* Скругление углов */
+  z-index: 1000; /* Приоритет отображения */
+  width: 500px; /* Фиксированная ширина */
+  max-height: 300px; /* Ограничение по высоте */
+  overflow-y: auto; /* Вертикальная прокрутка */
+  font-size: 14px; /* Размер текста */
+  line-height: 1.5; /* Интервал между строками */
+  overflow-wrap: break-word; /* Перенос длинных слов */
+  word-break: break-word; /* Перенос длинных слов */
+  white-space: pre-wrap; /* Сохраняем переносы строк */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Тень */
 }
