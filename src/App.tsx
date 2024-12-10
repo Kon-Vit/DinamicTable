@@ -4,7 +4,7 @@ import 'antd/dist/reset.css'; // Это важно для правильного
 // import 'antd/dist/antd.less'; // Импорт Less стилей
 
 import PostRequestComponent from './PostRequestComponent';
-import TableWithInfo from './TableWithInfo';
+
 
 
 

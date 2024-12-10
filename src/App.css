@@ -5,7 +5,6 @@
   margin: 50px auto 0 auto; /* Отступ сверху и снизу */
   overflow-x: auto; /* Прокрутка по горизонтали для больших таблиц */
   border: 1px solid #ddd; /* Рамка контейнера */
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Тень вокруг */
   padding: 0 10px; /* Небольшой отступ по бокам */
   border-radius: 0; /* Убираем скругление углов */
 }
@@ -19,8 +18,15 @@
   color: #333; /* Цвет текста */
 }
 
+:where(.css-dev-only-do-not-override-1wwf28x).ant-select,
+:where(.css-dev-only-do-not-override-1wwf28x).ant-select-dropdown,
+:where(.css-dev-only-do-not-override-1wwf28x).ant-select * {
+  border: none !important; /* Убираем любые границы */
+  box-shadow: none !important; /* Убираем эффект теней */
+}
+
 .dynamic-table-container .ant-input {
-  background-color: #f8f8f8 !important; /* Совпадает с фоном таблицы */
+  background-color: #ffffff !important; /* Совпадает с фоном таблицы */
   color: #333 !important; /* Совпадает с текстом таблицы */
   box-shadow: none !important; /* Убираем тени */
 }
