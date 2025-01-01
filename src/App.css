@@ -21,8 +21,8 @@
 :where(.css-dev-only-do-not-override-1wwf28x).ant-select,
 :where(.css-dev-only-do-not-override-1wwf28x).ant-select-dropdown,
 :where(.css-dev-only-do-not-override-1wwf28x).ant-select * {
-  border: none !important; /* Убираем любые границы */
-  box-shadow: none !important; /* Убираем эффект теней */
+  border: none !important; 
+  box-shadow: none !important; /* Гребаная хрень на которую я потратил 3 дня!!! */
 }
 
 .dynamic-table-container .ant-input {

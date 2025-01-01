@@ -86,7 +86,6 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
       ''
     );
   };
-
   const renderSelect = (
     catalogKey: keyof Catalog,
     record: DataSourceModel,
@@ -94,7 +93,9 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
     rowIndex: number,
     placeholder: string
   ) => {
-    const options = catalog[catalogKey] || [];
+    // Получаем список опций и добавляем "Не определено" вручную
+    const options = [{ key: null, name: 'Не определено' }, ...(catalog[catalogKey] || [])];
+  
     return (
       <Select
         value={record[dataIndex]}

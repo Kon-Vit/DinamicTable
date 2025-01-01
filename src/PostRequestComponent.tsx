@@ -12,6 +12,7 @@ const PostRequestComponent: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedRowKey, setSelectedRowKey] = useState<string | null>(null);
+  const [changedRows, setChangedRows] = useState<Set<string>>(new Set()); // Для отслеживания изменённых строк
 
   // Функция для загрузки данных с сервера
   const fetchData = async () => {
@@ -54,20 +55,56 @@ const PostRequestComponent: React.FC = () => {
     }
   };
 
+  // Функция для добавления новой строки
+  const handleAddRow = () => {
+    const newRow: DataSourceModel = {
+      key: Date.now().toString(),
+      fio_id: '', 
+      razn_t_t_id: null,
+      razn_shabl_pl_id: '',
+      razn_nak_id: '',
+      fio: '',
+      razn_t_t_name: '',
+      razn_shabl_pl_name: '',
+      razn_nak_name: '',
+      info: '',
+      mam: null,
+    };
+    setData([newRow, ...data]);
+    setChangedRows((prev) => new Set(prev).add(newRow.key)); // Добавляем новую строку в изменённые
+  };
+
+  console.log('Изменённые строки (ключи):', Array.from(changedRows));
+
   // Функция для сохранения данных
   const saveData = async () => {
     try {
+      if (changedRows.size === 0) {
+        message.warning('Нет изменений для сохранения!');
+        return;
+      }
+  
+      const validChangedRows = Array.from(changedRows).filter((key) => key !== undefined);
+  
+      const changedData = data.filter((row) => validChangedRows.includes(row.key));
+  
+      const saveRequestData = {
+        operation: 'razn_od',
+        params: changedData.map((item) => ({
+          ...item,
+          fio_id: item.fio_id || null,
+          razn_t_t_id: item.razn_t_t_id || null,
+        })),
+      };
+  
+      console.log('Отправляем изменения:', JSON.stringify(saveRequestData, null, 2));
+  
       const username = 'sirius220@yandex.ru';
       const password = 'qwe';
       const token = btoa(`${username}:${password}`);
-
-      const saveRequestData = {
-        operation: 'save_razn_od',
-        params: data,
-      };
-
-      await axios.post(
-        'http://87.103.198.92:5544/save_data',
+  
+      const response = await axios.put(
+        'http://87.103.198.92:5544/write_data',
         saveRequestData,
         {
           headers: {
@@ -76,42 +113,46 @@ const PostRequestComponent: React.FC = () => {
           },
         }
       );
-
-      message.success('Данные успешно сохранены!');
+  
+      if (response.status === 200) {
+        message.success('Изменения успешно сохранены!');
+        setChangedRows(new Set()); // Очищаем список изменённых строк
+      } else {
+        throw new Error('Не удалось сохранить изменения.');
+      }
     } catch (err) {
-      message.error('Ошибка при сохранении данных.');
+      console.error(err);
+      message.error('Ошибка при сохранении изменений.');
     }
   };
 
-  // Добавление новой строки
-  const handleAddRow = () => {
-    const newRow: DataSourceModel = {
-      key: Date.now().toString(),
-      fio_id: null,
-      razn_t_t_id: null,
-      razn_shabl_pl_id: null,
-      razn_nak_id: null,
-      fio: '',
-      razn_t_t_name: '',
-      razn_shabl_pl_name: '',
-      razn_nak_name: '',
-      info: 'Новая строка', // Дополнительное поле для информации
-    };
-    setData([newRow, ...data]);
-  };
-
-  // Удаление строки
+  // Функция для удаления строки
   const handleDeleteRow = () => {
     if (!selectedRowKey) {
       message.warning('Выберите строку для удаления!');
       return;
     }
     setData(data.filter((item) => item.key !== selectedRowKey));
+    setChangedRows((prev) => {
+      const updated = new Set(prev);
+      updated.delete(selectedRowKey); // Удаляем из изменённых, если строка была изменена
+      return updated;
+    });
     setSelectedRowKey(null);
   };
 
-  // Обновление данных
+  // Обновление данных (с отслеживанием изменений)
   const handleDataChange = (updatedData: DataSourceModel[]) => {
+    const updatedKeys = new Set(changedRows);
+  
+    updatedData.forEach((row, index) => {
+      const originalRow = data[index];
+      if (JSON.stringify(row) !== JSON.stringify(originalRow) && row.key) {
+        updatedKeys.add(row.key); // Добавляем только существующие ключи
+      }
+    });
+  
+    setChangedRows(updatedKeys);
     setData(updatedData);
   };
 
@@ -122,7 +163,7 @@ const PostRequestComponent: React.FC = () => {
         <Button onClick={fetchData} loading={loading} style={{ marginRight: 10 }}>
           Загрузить данные
         </Button>
-        <Button onClick={saveData} disabled={!data.length} style={{ marginRight: 10 }}>
+        <Button onClick={saveData} disabled={!changedRows.size} style={{ marginRight: 10 }}>
           Сохранить
         </Button>
         <Button
@@ -147,7 +188,7 @@ const PostRequestComponent: React.FC = () => {
           data={data}
           columns={columns}
           catalog={catalog}
-          onDataChange={handleDataChange}
+          onDataChange={handleDataChange} // Отслеживаем изменения
           onRowSelect={(key) => setSelectedRowKey(key)}
           selectedRowKey={selectedRowKey}
         />
