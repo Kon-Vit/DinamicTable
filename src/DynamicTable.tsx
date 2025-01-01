@@ -201,7 +201,7 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
               onChange={(e) =>
                 handleEdit(index, column.dataIndex, e.target.value)
               }
-              placeholder={`Введите ${column.title}`}
+              placeholder={``}
               className="input-no-border"
              
             />
