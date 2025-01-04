@@ -12,9 +12,8 @@ const PostRequestComponent: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedRowKey, setSelectedRowKey] = useState<string | null>(null);
-  const [changedRows, setChangedRows] = useState<Set<string>>(new Set()); // Для отслеживания изменённых строк
+  const [changedRows, setChangedRows] = useState<Set<string>>(new Set());
 
-  // Функция для загрузки данных с сервера
   const fetchData = async () => {
     setLoading(true);
     setError(null);
@@ -55,11 +54,10 @@ const PostRequestComponent: React.FC = () => {
     }
   };
 
-  // Функция для добавления новой строки
   const handleAddRow = () => {
     const newRow: DataSourceModel = {
       key: Date.now().toString(),
-      fio_id: '', 
+      fio_id: '',
       razn_t_t_id: null,
       razn_shabl_pl_id: '',
       razn_nak_id: '',
@@ -71,23 +69,22 @@ const PostRequestComponent: React.FC = () => {
       mam: null,
     };
     setData([newRow, ...data]);
-    setChangedRows((prev) => new Set(prev).add(newRow.key)); // Добавляем новую строку в изменённые
+    setChangedRows((prev) => new Set(prev).add(newRow.key));
   };
 
   console.log('Изменённые строки (ключи):', Array.from(changedRows));
 
-  // Функция для сохранения данных
   const saveData = async () => {
     try {
       if (changedRows.size === 0) {
         message.warning('Нет изменений для сохранения!');
         return;
       }
-  
+
       const validChangedRows = Array.from(changedRows).filter((key) => key !== undefined);
-  
+
       const changedData = data.filter((row) => validChangedRows.includes(row.key));
-  
+
       const saveRequestData = {
         operation: 'razn_od',
         params: changedData.map((item) => ({
@@ -96,13 +93,13 @@ const PostRequestComponent: React.FC = () => {
           razn_t_t_id: item.razn_t_t_id || null,
         })),
       };
-  
+
       console.log('Отправляем изменения:', JSON.stringify(saveRequestData, null, 2));
-  
+
       const username = 'sirius220@yandex.ru';
       const password = 'qwe';
       const token = btoa(`${username}:${password}`);
-  
+
       const response = await axios.put(
         'http://87.103.198.92:5544/write_data',
         saveRequestData,
@@ -113,10 +110,10 @@ const PostRequestComponent: React.FC = () => {
           },
         }
       );
-  
+
       if (response.status === 200) {
         message.success('Изменения успешно сохранены!');
-        setChangedRows(new Set()); // Очищаем список изменённых строк
+        setChangedRows(new Set());
       } else {
         throw new Error('Не удалось сохранить изменения.');
       }
@@ -126,39 +123,81 @@ const PostRequestComponent: React.FC = () => {
     }
   };
 
-  // Функция для удаления строки
-  const handleDeleteRow = () => {
+  const handleDeleteRow = async () => {
     if (!selectedRowKey) {
       message.warning('Выберите строку для удаления!');
       return;
     }
-    setData(data.filter((item) => item.key !== selectedRowKey));
-    setChangedRows((prev) => {
-      const updated = new Set(prev);
-      updated.delete(selectedRowKey); // Удаляем из изменённых, если строка была изменена
-      return updated;
-    });
-    setSelectedRowKey(null);
+
+    const rowToDelete = data.find((item) => item.key === selectedRowKey);
+    if (!rowToDelete) {
+      message.error('Выбранная строка не найдена.');
+      return;
+    }
+
+    if (!catalog) {
+      message.error('Каталог не найден.');
+      return;
+    }
+
+    const primaryKey = rowToDelete[catalog.key_list[0]];
+
+    try {
+      const username = 'sirius220@yandex.ru';
+      const password = 'qwe';
+      const token = btoa(`${username}:${password}`);
+
+      const deleteRequestData = {
+        operation: 'razn_od',
+        params: { [catalog.key_list[0]]: primaryKey },
+      };
+
+      const response = await axios.delete('http://87.103.198.92:5544/delete_data', {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Basic ${token}`,
+        },
+        data: deleteRequestData,
+      });
+
+      if (response.status === 200) {
+        const updatedData = data.filter((item) => item.key !== selectedRowKey);
+        setData(updatedData);
+        message.success('Строка успешно удалена.');
+      } else {
+        throw new Error('Ошибка удаления.');
+      }
+    } catch (err) {
+      console.error(err);
+      message.error('Не удалось удалить строку.');
+    } finally {
+      setSelectedRowKey(null);
+    }
   };
 
-  // Обновление данных (с отслеживанием изменений)
+  const handleRowDoubleClick = (key: string | null) => {
+    if (key) {
+      setSelectedRowKey(key);
+      message.info(`Строка с ключом ${key} выделена.`);
+    }
+  };
+
   const handleDataChange = (updatedData: DataSourceModel[]) => {
     const updatedKeys = new Set(changedRows);
-  
+
     updatedData.forEach((row, index) => {
       const originalRow = data[index];
       if (JSON.stringify(row) !== JSON.stringify(originalRow) && row.key) {
-        updatedKeys.add(row.key); // Добавляем только существующие ключи
+        updatedKeys.add(row.key);
       }
     });
-  
+
     setChangedRows(updatedKeys);
     setData(updatedData);
   };
 
   return (
     <div>
-      {/* Кнопки управления */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '10px 0' }}>
         <Button onClick={fetchData} loading={loading} style={{ marginRight: 10 }}>
           Загрузить данные
@@ -174,23 +213,26 @@ const PostRequestComponent: React.FC = () => {
         >
           Добавить строку
         </Button>
-        <Button danger onClick={handleDeleteRow} disabled={!selectedRowKey || !data.length}>
+        <Button
+          danger
+          onClick={handleDeleteRow}
+          disabled={!selectedRowKey || !data.some((row) => row.razn_od_key === selectedRowKey)}
+        >
           Удалить строку
         </Button>
       </div>
 
-      {/* Отображение ошибки */}
       {error && <div style={{ color: 'red' }}>{error}</div>}
 
-      {/* Основная таблица с дополнительной информацией */}
       {catalog && columns.length > 0 && (
         <TableWithInfo
           data={data}
           columns={columns}
           catalog={catalog}
-          onDataChange={handleDataChange} // Отслеживаем изменения
+          onDataChange={handleDataChange}
           onRowSelect={(key) => setSelectedRowKey(key)}
           selectedRowKey={selectedRowKey}
+          onRowDoubleClick={handleRowDoubleClick}
         />
       )}
     </div>

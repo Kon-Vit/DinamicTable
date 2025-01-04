@@ -13,6 +13,7 @@ export interface DynamicTableProps {
   onRowSelect: (selectedKey: string | null) => void;
   selectedRowKey: string | null;
   onRowHover: (info: string | null) => void;  // Это обязательное свойство
+  onRowDoubleClick: (key: string | null) => void;
 }
 
 
@@ -25,6 +26,8 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
   onRowSelect,
   selectedRowKey,
   onRowHover,
+  onRowDoubleClick,
+  
 }) => {
   const [editedData, setEditedData] = useState<DataSourceModel[]>([]);
 
@@ -42,7 +45,7 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
   const handleEdit = (rowIndex: number, colKey: string, value: any) => {
     const updatedData = [...editedData];
     updatedData[rowIndex][colKey] = value;
-
+  
     if (colKey === 'fio_id') {
       updatedData[rowIndex].fio = getCatalogValue('fio_id', value);
     }
@@ -55,34 +58,49 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
     if (colKey === 'razn_nak_id') {
       updatedData[rowIndex].razn_nak_name = getCatalogValue('razn_nak_id', value);
     }
-
-    setEditedData(updatedData);
-    onDataChange(updatedData);
+  
+    // Убираем null, если вдруг они появились
+    const cleanedData: DataSourceModel[] = updatedData.filter(
+      (item): item is DataSourceModel => item !== null
+    );
+  
+    setEditedData(cleanedData);
+    onDataChange(cleanedData);
   };
 
   const handleRowClick = (record: DataSourceModel) => {
+    console.log('Клик на строку с ключом:', record.key);
     onRowSelect(record.key);
   };
 
-  const getRowClassName = (record: DataSourceModel) => {
-    return record.key === selectedRowKey ? 'selected-row' : '';
+  const handleRowDoubleClick = (record: DataSourceModel) => {
+    const key = record.razn_od_key; // Берем ключ из поля razn_od_key
+    if (key) {
+      onRowDoubleClick(key); // Передаем ключ в обработчик
+    }
   };
+  
+  const getRowClassName = (record: DataSourceModel) => {
+    const baseClass = record.del ? 'deleted-row' : ''; // Если запись помечена как del = true
+    return record.key === selectedRowKey ? `${baseClass} selected-row` : baseClass;
+  };
+
 
   const getCatalogValue = (
     catalogKey: keyof Catalog,
     value: number | null | undefined
   ): string => {
-    if (!value) return '';
+    if (!value) return ''; // Если значение равно null/undefined, возвращаем пустую строку
     const catalogList = catalog[catalogKey] || [];
     const matchedItem = catalogList.find(
-      (item: any) => item.key === value || item.razn_nak_key === value
+      (item: any) => item.key === value || item.fio_key === value
     );
     return (
-      matchedItem?.name ||
-      matchedItem?.fio ||
-      matchedItem?.t_t ||
-      matchedItem?.shabl_name ||
-      matchedItem?.name_ak ||
+      matchedItem?.name || 
+      matchedItem?.fio || 
+      matchedItem?.t_t || 
+      matchedItem?.shabl_name || 
+      matchedItem?.name_ak || 
       ''
     );
   };
@@ -129,6 +147,8 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
     );
   };
 
+ 
+
   const antColumns = columns.map((column) => ({
     title: column.title || column.key,
     dataIndex: column.dataIndex,
@@ -150,17 +170,16 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
       }
 
       switch (column.dataIndex) {
-        case 'fio_id':
-          return (
-            renderSelect(
-              'fio_id',
-              record,
-              column.dataIndex,
-              index,
-              'Выберите водителя'
-            ) || <span>{record.fio}</span>
-          );
-
+       case 'fio_id':
+  return (
+    renderSelect(
+      'fio_id',
+      record,
+      column.dataIndex,
+      index,
+      'Выберите водителя'
+    ) || <span>{record.fio || 'Не определено'}</span>
+  );
         case 'razn_t_t_id':
           return (
             renderSelect(
@@ -221,6 +240,7 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
           onClick: () => handleRowClick(record),
           onMouseEnter: () => onRowHover(record.info),
           onMouseLeave: () => onRowHover(null),
+          onDoubleClick: () => handleRowDoubleClick(record),
         })}
         rowClassName={getRowClassName}
       />

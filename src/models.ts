@@ -27,6 +27,8 @@ export interface VidSoob {
 }
 
 export interface Catalog {
+  key_list: string[]; 
+  [key: string]: any;
   fio_id: Fio[];
   razn_nak_id: RaznNak[];
   razn_od_id_pricep: any[];  // Если структура не определена, оставляем any

@@ -111,13 +111,10 @@
   background-color: #e6f7ff !important;
 }
 
-
-
-
-
-
-
-
+.deleted-row {
+  background-color: #ffe6e6 !important;
+  text-decoration: line-through;
+}
 
 -------
 .table-with-info-container {

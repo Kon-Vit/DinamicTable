@@ -11,6 +11,7 @@ interface TableWithInfoProps {
   onDataChange: (updatedData: DataSourceModel[]) => void;
   onRowSelect: (selectedKey: string | null) => void;
   selectedRowKey: string | null;
+  onRowDoubleClick: (key: string | null) => void;
 }
 
 const TableWithInfo: React.FC<TableWithInfoProps> = ({
@@ -20,6 +21,7 @@ const TableWithInfo: React.FC<TableWithInfoProps> = ({
   onDataChange,
   onRowSelect,
   selectedRowKey,
+  onRowDoubleClick,
 }) => {
   const [hoveredInfo, setHoveredInfo] = useState<string | null>(null);
 
@@ -45,6 +47,7 @@ const TableWithInfo: React.FC<TableWithInfoProps> = ({
         onRowSelect={onRowSelect}
         selectedRowKey={selectedRowKey}
         onRowHover={handleRowHover} // Передаем обработчик для наведения
+        onRowDoubleClick={onRowDoubleClick}
       />
 
       {/* Фрейм с информацией */}
