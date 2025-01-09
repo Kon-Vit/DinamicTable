@@ -10,6 +10,7 @@ interface TableWithInfoProps {
   catalog: Catalog;
   onDataChange: (updatedData: DataSourceModel[]) => void;
   onRowSelect: (selectedKey: string | null) => void;
+  // onRowSelect={(key) => setSelectedRowKey(key ? String(key) : null)}
   selectedRowKey: string | null;
   onRowDoubleClick: (key: string | null) => void;
 }

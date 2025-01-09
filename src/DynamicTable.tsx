@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Table, Input, Select, Checkbox } from 'antd';
 import { ColumnModel, DataSourceModel, Catalog } from './models';
@@ -10,7 +11,7 @@ export interface DynamicTableProps {
   columns: ColumnModel[];
   catalog: Catalog;
   onDataChange: (updatedData: DataSourceModel[]) => void;
-  onRowSelect: (selectedKey: string | null) => void;
+  onRowSelect: (selectedKey: string | null) => void;  // Убрана инициализация
   selectedRowKey: string | null;
   onRowHover: (info: string | null) => void;  // Это обязательное свойство
   onRowDoubleClick: (key: string | null) => void;
@@ -69,14 +70,14 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
   };
 
   const handleRowClick = (record: DataSourceModel) => {
-    console.log('Клик на строку с ключом:', record.key);
-    onRowSelect(record.key);
+    const keyAsString = String(record.key);  // Преобразование ключа
+    onRowSelect(keyAsString);
   };
 
   const handleRowDoubleClick = (record: DataSourceModel) => {
-    const key = record.razn_od_key; // Берем ключ из поля razn_od_key
-    if (key) {
-      onRowDoubleClick(key); // Передаем ключ в обработчик
+    const keyAsString = String(record.key);  // Преобразование ключа для совместимости
+    if (keyAsString) {
+      onRowDoubleClick(keyAsString);  // Вызов с преобразованным ключом
     }
   };
   
@@ -235,6 +236,7 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
         dataSource={editedData}
         columns={antColumns}
         rowKey={(record: any) => record.key || record.id}
+        // rowKey={(record) => String(record.key || record.id)}
         bordered={false}
         onRow={(record) => ({
           onClick: () => handleRowClick(record),

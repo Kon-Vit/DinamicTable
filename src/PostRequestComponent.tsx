@@ -123,64 +123,69 @@ const PostRequestComponent: React.FC = () => {
     }
   };
 
-  const handleDeleteRow = async () => {
-    if (!selectedRowKey) {
-      message.warning('Выберите строку для удаления!');
-      return;
+ const handleDeleteRow = async () => {
+  if (!selectedRowKey) {
+    message.warning('Выберите строку для удаления!');
+    return;
+  }
+
+  if (!catalog || !catalog.key_list.length) {
+    message.error('Каталог не загружен или не содержит ключей.');
+    return;
+  }
+
+  const rowToDelete = data.find((item) => Number(item.key) === Number(selectedRowKey));
+  if (!rowToDelete) {
+    message.error('Выбранная строка не найдена.');
+    return;
+  }
+
+  const primaryKey = rowToDelete[catalog.key_list[0]];
+  if (primaryKey === undefined) {
+    message.error('Первичный ключ не найден.');
+    return;
+  }
+
+  try {
+    const username = 'sirius220@yandex.ru';
+    const password = 'qwe';
+    const token = btoa(`${username}:${password}`);
+
+    const deleteRequestData = {
+      operation: 'razn_od',
+      params: { [catalog.key_list[0]]: primaryKey },
+    };
+
+    const response = await axios.delete('http://87.103.198.92:5544/delete_data', {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Basic ${token}`,
+      },
+      data: deleteRequestData,
+    });
+
+    if (response.status === 200) {
+      const updatedData = data.filter((item) => item.key !== selectedRowKey);
+      setData(updatedData);
+      message.success('Строка успешно удалена.');
+    } else {
+      throw new Error('Ошибка удаления.');
     }
+  } catch (err) {
+    console.error(err);
+    message.error('Не удалось удалить строку.');
+  } finally {
+    setSelectedRowKey(null);
+  }
+};
 
-    const rowToDelete = data.find((item) => item.key === selectedRowKey);
-    if (!rowToDelete) {
-      message.error('Выбранная строка не найдена.');
-      return;
-    }
-
-    if (!catalog) {
-      message.error('Каталог не найден.');
-      return;
-    }
-
-    const primaryKey = rowToDelete[catalog.key_list[0]];
-
-    try {
-      const username = 'sirius220@yandex.ru';
-      const password = 'qwe';
-      const token = btoa(`${username}:${password}`);
-
-      const deleteRequestData = {
-        operation: 'razn_od',
-        params: { [catalog.key_list[0]]: primaryKey },
-      };
-
-      const response = await axios.delete('http://87.103.198.92:5544/delete_data', {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Basic ${token}`,
-        },
-        data: deleteRequestData,
-      });
-
-      if (response.status === 200) {
-        const updatedData = data.filter((item) => item.key !== selectedRowKey);
-        setData(updatedData);
-        message.success('Строка успешно удалена.');
-      } else {
-        throw new Error('Ошибка удаления.');
-      }
-    } catch (err) {
-      console.error(err);
-      message.error('Не удалось удалить строку.');
-    } finally {
-      setSelectedRowKey(null);
-    }
-  };
-
-  const handleRowDoubleClick = (key: string | null) => {
-    if (key) {
-      setSelectedRowKey(key);
-      message.info(`Строка с ключом ${key} выделена.`);
-    }
-  };
+const handleRowDoubleClick = (key: string | number | null) => {
+  if (key !== null) {
+    const keyAsString = String(key);  // Преобразование для согласованности
+    setSelectedRowKey(keyAsString);
+    message.info(`Строка с ключом ${keyAsString} выделена.`);
+  }
+};
 
   const handleDataChange = (updatedData: DataSourceModel[]) => {
     const updatedKeys = new Set(changedRows);
@@ -214,12 +219,12 @@ const PostRequestComponent: React.FC = () => {
           Добавить строку
         </Button>
         <Button
-          danger
-          onClick={handleDeleteRow}
-          disabled={!selectedRowKey || !data.some((row) => row.razn_od_key === selectedRowKey)}
-        >
-          Удалить строку
-        </Button>
+  danger
+  onClick={handleDeleteRow}
+  disabled={!selectedRowKey || !data.some((row) => String(row.key) === String(selectedRowKey))}
+>
+  Удалить строку
+</Button>
       </div>
 
       {error && <div style={{ color: 'red' }}>{error}</div>}
@@ -239,4 +244,4 @@ const PostRequestComponent: React.FC = () => {
   );
 };
 
-export default PostRequestComponent;
+export default PostRequestComponent;     
