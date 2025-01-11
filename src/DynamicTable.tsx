@@ -65,19 +65,25 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
       (item): item is DataSourceModel => item !== null
     );
   
-    setEditedData(cleanedData);
-    onDataChange(cleanedData);
+    setEditedData(updatedData);
+    onDataChange(updatedData);
   };
 
   const handleRowClick = (record: DataSourceModel) => {
-    const keyAsString = String(record.key);  // Преобразование ключа
-    onRowSelect(keyAsString);
+    if (record.key !== undefined && record.key !== null) {
+      const keyAsString = String(record.key);
+      onRowSelect(keyAsString);
+    } else {
+      console.warn('Попытка выделить строку без ключа.');
+    }
   };
-
+  
   const handleRowDoubleClick = (record: DataSourceModel) => {
-    const keyAsString = String(record.key);  // Преобразование ключа для совместимости
-    if (keyAsString) {
-      onRowDoubleClick(keyAsString);  // Вызов с преобразованным ключом
+    if (record.key !== undefined && record.key !== null) {
+      const keyAsString = String(record.key);
+      onRowDoubleClick(keyAsString);
+    } else {
+      console.warn('Попытка двойного клика на строке без ключа.');
     }
   };
   
@@ -235,7 +241,7 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
       <Table
         dataSource={editedData}
         columns={antColumns}
-        rowKey={(record: any) => record.key || record.id}
+        rowKey="key"
         // rowKey={(record) => String(record.key || record.id)}
         bordered={false}
         onRow={(record) => ({

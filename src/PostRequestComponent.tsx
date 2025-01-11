@@ -21,12 +21,12 @@ const PostRequestComponent: React.FC = () => {
       const username = 'sirius220@yandex.ru';
       const password = 'qwe';
       const token = btoa(`${username}:${password}`);
-
+  
       const requestData = {
         operation: 'razn_od',
         params: [1, null, null],
       };
-
+  
       const response = await axios.post<ApiResponse>(
         'http://87.103.198.92:5544/read_data',
         requestData,
@@ -37,18 +37,33 @@ const PostRequestComponent: React.FC = () => {
           },
         }
       );
-
+  
       const apiResponse = response.data;
-
-      if (!apiResponse.columns || !apiResponse.dataSource || !apiResponse.catalog) {
-        throw new Error('Некорректный ответ сервера');
+  
+      console.log('Полный ответ от сервера:', apiResponse);
+  
+      // Убедитесь, что catalog и key_list существуют
+      if (!apiResponse.catalog || !apiResponse.key_list || !apiResponse.key_list.primary_key) {
+        throw new Error('Некорректный ответ от сервера: отсутствует key_list или primary_key');
       }
-
+  
+      const primaryKeyField = apiResponse.key_list.primary_key; // Извлекаем имя первичного ключа
+  
+      // Проверка, что в dataSource есть значение для этого ключа
+      const dataWithKey = apiResponse.dataSource.map((item) => ({
+        key: item[primaryKeyField], // Используем ключ из поля primary_key
+        ...item,                    // Копируем остальные данные
+      }));
+  
       setColumns(apiResponse.columns);
-      setData(apiResponse.dataSource);
-      setCatalog(apiResponse.catalog);
+      setData(dataWithKey);
+  
+      const keyList = [primaryKeyField]; // Преобразуем имя ключа в массив
+      setCatalog({ ...apiResponse.catalog, key_list: keyList });
+  
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка при загрузке данных');
+      console.error(err);
+      setError('Ошибка загрузки данных');
     } finally {
       setLoading(false);
     }
@@ -123,69 +138,84 @@ const PostRequestComponent: React.FC = () => {
     }
   };
 
- const handleDeleteRow = async () => {
-  if (!selectedRowKey) {
-    message.warning('Выберите строку для удаления!');
-    return;
-  }
-
-  if (!catalog || !catalog.key_list.length) {
-    message.error('Каталог не загружен или не содержит ключей.');
-    return;
-  }
-
-  const rowToDelete = data.find((item) => Number(item.key) === Number(selectedRowKey));
-  if (!rowToDelete) {
-    message.error('Выбранная строка не найдена.');
-    return;
-  }
-
-  const primaryKey = rowToDelete[catalog.key_list[0]];
-  if (primaryKey === undefined) {
-    message.error('Первичный ключ не найден.');
-    return;
-  }
-
-  try {
-    const username = 'sirius220@yandex.ru';
-    const password = 'qwe';
-    const token = btoa(`${username}:${password}`);
-
-    const deleteRequestData = {
-      operation: 'razn_od',
-      params: { [catalog.key_list[0]]: primaryKey },
-    };
-
-    const response = await axios.delete('http://87.103.198.92:5544/delete_data', {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Basic ${token}`,
-      },
-      data: deleteRequestData,
-    });
-
-    if (response.status === 200) {
-      const updatedData = data.filter((item) => item.key !== selectedRowKey);
-      setData(updatedData);
-      message.success('Строка успешно удалена.');
-    } else {
-      throw new Error('Ошибка удаления.');
+  const handleDeleteRow = async () => {
+    if (!selectedRowKey) {
+      message.warning('Выберите строку для удаления!');
+      return;
     }
-  } catch (err) {
-    console.error(err);
-    message.error('Не удалось удалить строку.');
-  } finally {
-    setSelectedRowKey(null);
-  }
-};
 
-const handleRowDoubleClick = (key: string | number | null) => {
-  if (key !== null) {
-    const keyAsString = String(key);  // Преобразование для согласованности
-    setSelectedRowKey(keyAsString);
-    message.info(`Строка с ключом ${keyAsString} выделена.`);
-  }
-};
+    console.log('catalog:', catalog);  // Проверяем, что содержит переменная catalog
+    if (!catalog) {
+      message.error('Каталог не загружен.');
+      return;
+    }
+    
+    console.log('catalog.key_list:', catalog.key_list);  // Проверяем key_list после проверки catalog
+    if (!Array.isArray(catalog.key_list) || catalog.key_list.length === 0) {
+      message.error('Каталог не содержит ключей.');
+      return;
+    }
+  
+    if (!catalog || !Array.isArray(catalog.key_list) || catalog.key_list.length === 0) {
+      message.error('Каталог не загружен или не содержит ключей.');
+      return;
+    }
+  
+    // Если key_list — это массив строк, то просто берем первое значение.
+    const primaryKeyField = catalog.key_list[0]; // Берем первый элемент массива как имя поля ключа
+    const rowToDelete = data.find((item) => Number(item.key) === Number(selectedRowKey));
+  
+    if (!rowToDelete) {
+      message.error('Выбранная строка не найдена.');
+      return;
+    }
+  
+    const primaryKey = rowToDelete[primaryKeyField]; // Используем динамическое имя поля
+    if (primaryKey === undefined) {
+      message.error('Первичный ключ не найден.');
+      return;
+    }
+  
+    try {
+      const username = 'sirius220@yandex.ru';
+      const password = 'qwe';
+      const token = btoa(`${username}:${password}`);
+  
+      const deleteRequestData = {
+        operation: 'razn_od',
+        params: { [primaryKeyField]: primaryKey }, // Динамическое использование имени поля
+      };
+  
+      const response = await axios.delete('http://87.103.198.92:5544/delete_data', {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Basic ${token}`,
+        },
+        data: deleteRequestData,
+      });
+  
+      if (response.status === 200) {
+        const updatedData = data.filter((item) => item.key !== selectedRowKey);
+        setData(updatedData);
+        message.success('Строка успешно удалена.');
+      } else {
+        throw new Error('Ошибка удаления.');
+      }
+    } catch (err) {
+      console.error(err);
+      message.error('Не удалось удалить строку.');
+    } finally {
+      setSelectedRowKey(null);
+    }
+  };
+
+  const handleRowDoubleClick = (key: string | number | null) => {
+    if (key !== null) {
+      const keyAsString = String(key);  // Преобразование для согласованности
+      setSelectedRowKey(keyAsString);
+      message.info(`Строка с ключом ${keyAsString} выделена.`);
+    }
+  };
 
   const handleDataChange = (updatedData: DataSourceModel[]) => {
     const updatedKeys = new Set(changedRows);
@@ -219,12 +249,12 @@ const handleRowDoubleClick = (key: string | number | null) => {
           Добавить строку
         </Button>
         <Button
-  danger
-  onClick={handleDeleteRow}
-  disabled={!selectedRowKey || !data.some((row) => String(row.key) === String(selectedRowKey))}
->
-  Удалить строку
-</Button>
+          danger
+          onClick={handleDeleteRow}
+          disabled={!selectedRowKey || !data.some((row) => String(row.key) === String(selectedRowKey))}
+        >
+          Удалить строку
+        </Button>
       </div>
 
       {error && <div style={{ color: 'red' }}>{error}</div>}
@@ -241,6 +271,7 @@ const handleRowDoubleClick = (key: string | number | null) => {
         />
       )}
     </div>
+ 
   );
 };
 
