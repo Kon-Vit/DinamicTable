@@ -46,6 +46,8 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
   const handleEdit = (rowIndex: number, colKey: string, value: any) => {
     const updatedData = [...editedData];
     updatedData[rowIndex][colKey] = value;
+
+    updatedData[rowIndex].isEdited = true; 
   
     if (colKey === 'fio_id') {
       updatedData[rowIndex].fio = getCatalogValue('fio_id', value);
@@ -61,9 +63,10 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
     }
   
     // Убираем null, если вдруг они появились
-    const cleanedData: DataSourceModel[] = updatedData.filter(
-      (item): item is DataSourceModel => item !== null
-    );
+    // const cleanedData: DataSourceModel[] = updatedData.filter(
+    //   (item): item is DataSourceModel => item !== null
+    // );
+    
   
     setEditedData(updatedData);
     onDataChange(updatedData);

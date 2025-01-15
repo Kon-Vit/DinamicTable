@@ -13,6 +13,8 @@ const PostRequestComponent: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedRowKey, setSelectedRowKey] = useState<string | null>(null);
   const [changedRows, setChangedRows] = useState<Set<string>>(new Set());
+  
+
 
   const fetchData = async () => {
     setLoading(true);
@@ -69,74 +71,142 @@ const PostRequestComponent: React.FC = () => {
     }
   };
 
-  const handleAddRow = () => {
-    const newRow: DataSourceModel = {
-      key: Date.now().toString(),
-      fio_id: '',
-      razn_t_t_id: null,
-      razn_shabl_pl_id: '',
-      razn_nak_id: '',
-      fio: '',
-      razn_t_t_name: '',
-      razn_shabl_pl_name: '',
-      razn_nak_name: '',
-      info: '',
-      mam: null,
-    };
-    setData([newRow, ...data]);
-    setChangedRows((prev) => new Set(prev).add(newRow.key));
+  // 
+  
+  const [changedRowMap, setChangedRowMap] = useState<Map<string, DataSourceModel>>(new Map());
+
+const handleAddRow = () => {
+  const newRow: DataSourceModel = {
+    key: Date.now().toString(),
+    fio_id: '',
+    razn_t_t_id: null,
+    razn_shabl_pl_id: '',
+    razn_nak_id: '',
+    fio: '',
+    razn_t_t_name: '',
+    razn_shabl_pl_name: '',
+    razn_nak_name: '',
+    info: '',
+    mam: null,
   };
+  setData([newRow, ...data]);
+  setChangedRowMap((prev) => new Map(prev).set(newRow.key, newRow)); // Добавляем новую строку
+};
 
-  console.log('Изменённые строки (ключи):', Array.from(changedRows));
+console.log('Изменённые строки (ключи):', Array.from(changedRowMap.keys()));
 
-  const saveData = async () => {
-    try {
-      if (changedRows.size === 0) {
+// const saveData = async () => {
+//   try {
+//     if (changedRowMap.size === 0) {
+//       message.warning('Нет изменений для сохранения!');
+//       return;
+//     }
+
+//     const changedData = Array.from(changedRowMap.values()); // Извлекаем измененные строки
+
+//     const saveRequestData = {
+//       operation: 'razn_od',
+//       params: changedData.map((item) => ({
+//         ...item,
+//         fio_id: item.fio_id || null,
+//         razn_t_t_id: item.razn_t_t_id || null,
+//       })),
+//     };
+
+//     console.log('Отправляем изменения:', JSON.stringify(saveRequestData, null, 2));
+
+
+
+    const requiredColumns = columns.map((col) => col.key); // Список всех колонок
+    // const saveData = async () => {
+    //   if (changedRowMap.size === 0) {
+    //     message.warning('Нет изменений для сохранения!');
+    //     return;
+    //   }
+    
+    //   const changedData = Array.from(changedRowMap.values());
+    
+    //   const saveRequestData = {
+    //     operation: 'razn_od',
+    //     params: changedData,
+    //   };
+    
+    //   try {
+    //     const username = 'sirius220@yandex.ru';
+    //     const password = 'qwe';
+    //     const token = btoa(`${username}:${password}`);
+    
+    //     const response = await axios.put('http://87.103.198.92:5544/write_data', saveRequestData, {
+    //       headers: {
+    //         'Content-Type': 'application/json',
+    //         Authorization: `Basic ${token}`,
+    //       },
+    //     });
+    
+    //     if (response.status === 200) {
+    //       message.success('Изменения успешно сохранены!');
+    //       setChangedRowMap(new Map());
+    //     } else {
+    //       throw new Error('Не удалось сохранить изменения.');
+    //     }
+    //   } catch (err) {
+    //     console.error(err);
+    //     message.error('Ошибка при сохранении изменений.');
+    //   }
+    // };
+
+    const saveData = async () => {
+      if (changedRowMap.size === 0) {
         message.warning('Нет изменений для сохранения!');
         return;
       }
+    
+      // const changedData = Array.from(changedRowMap.entries()).map(([key, row]) => {
+      //   const requiredRowData: Partial<DataSourceModel> = {
+      //     key,  // Убедитесь, что первичный ключ всегда включен
+      //     ...row,
+      //   };
+    
+      //   // Гарантируем, что важные поля, такие как razn_t_t_id, не будут отправлены как null
+      //   if (requiredRowData.razn_t_t_id === null) {
+      //     requiredRowData.razn_t_t_id = '';  // Можно задать значение по умолчанию, если требуется
+      //   }
+      //   return requiredRowData;
+      // });
 
-      const validChangedRows = Array.from(changedRows).filter((key) => key !== undefined);
-
-      const changedData = data.filter((row) => validChangedRows.includes(row.key));
-
+      const changedData = Array.from(changedRowMap.values()); // Используем только измененные строки
+    
       const saveRequestData = {
         operation: 'razn_od',
-        params: changedData.map((item) => ({
-          ...item,
-          fio_id: item.fio_id || null,
-          razn_t_t_id: item.razn_t_t_id || null,
-        })),
+        params: changedData,
       };
-
-      console.log('Отправляем изменения:', JSON.stringify(saveRequestData, null, 2));
-
-      const username = 'sirius220@yandex.ru';
-      const password = 'qwe';
-      const token = btoa(`${username}:${password}`);
-
-      const response = await axios.put(
-        'http://87.103.198.92:5544/write_data',
-        saveRequestData,
-        {
+    
+      try {
+        const username = 'sirius220@yandex.ru';
+        const password = 'qwe';
+        const token = btoa(`${username}:${password}`);
+    
+        console.log('Данные для сохранения:', JSON.stringify(saveRequestData, null, 2));
+    
+        const response = await axios.put('http://87.103.198.92:5544/write_data', saveRequestData, {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Basic ${token}`,
           },
+        });
+    
+        if (response.status === 200) {
+          message.success('Изменения успешно сохранены!');
+          setChangedRowMap(new Map());
+        } else {
+          throw new Error('Не удалось сохранить изменения.');
         }
-      );
-
-      if (response.status === 200) {
-        message.success('Изменения успешно сохранены!');
-        setChangedRows(new Set());
-      } else {
-        throw new Error('Не удалось сохранить изменения.');
+      } catch (err) {
+        console.error('Ошибка при сохранении данных:', err);
+        message.error('Ошибка при сохранении изменений.');
       }
-    } catch (err) {
-      console.error(err);
-      message.error('Ошибка при сохранении изменений.');
-    }
-  };
+    };
+    
 
   const handleDeleteRow = async () => {
     if (!selectedRowKey) {
@@ -217,19 +287,42 @@ const PostRequestComponent: React.FC = () => {
     }
   };
 
-  const handleDataChange = (updatedData: DataSourceModel[]) => {
-    const updatedKeys = new Set(changedRows);
+  
 
-    updatedData.forEach((row, index) => {
-      const originalRow = data[index];
-      if (JSON.stringify(row) !== JSON.stringify(originalRow) && row.key) {
-        updatedKeys.add(row.key);
-      }
-    });
+// const handleDataChange = (updatedData: DataSourceModel[]) => {
+//   const updatedMap = new Map(changedRowMap);
 
-    setChangedRows(updatedKeys);
-    setData(updatedData);
-  };
+//   updatedData.forEach((row) => {
+//     const originalRow = data.find((originalRow) => originalRow.key === row.key);
+//     if (originalRow) {
+//       const updatedFields = Object.keys(row).reduce((acc, key) => {
+//         if (row[key] !== originalRow[key]) {
+//           acc[key] = row[key];
+//         }
+//         return acc;
+//       }, {} as Record<string, any>);
+
+//       if (Object.keys(updatedFields).length > 0) {
+//         updatedMap.set(row.key, { ...originalRow, ...updatedFields });
+//       }
+//     }
+//   });
+
+const handleDataChange = (updatedData: DataSourceModel[]) => {
+  const updatedMap = new Map(changedRowMap);
+
+  updatedData.forEach((row) => {
+    const originalRow = data.find((originalRow) => originalRow.key === row.key);
+    if (!originalRow || JSON.stringify(row) !== JSON.stringify(originalRow)) {
+      updatedMap.set(row.key, row); // Обновляем измененные строки
+    }
+  });
+
+  setChangedRowMap(updatedMap); // Обновляем только измененные строки
+  setData(updatedData); // Обновляем отображаемые данные
+};
+
+
 
   return (
     <div>
@@ -237,7 +330,8 @@ const PostRequestComponent: React.FC = () => {
         <Button onClick={fetchData} loading={loading} style={{ marginRight: 10 }}>
           Загрузить данные
         </Button>
-        <Button onClick={saveData} disabled={!changedRows.size} style={{ marginRight: 10 }}>
+        {/* <Button onClick={saveData} disabled={!changedRows.size} style={{ marginRight: 10 }}> */}
+        <Button onClick={saveData} disabled={changedRowMap.size === 0} style={{ marginRight: 10 }}>
           Сохранить
         </Button>
         <Button
