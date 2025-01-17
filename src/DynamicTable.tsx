@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Table, Input, Select, Checkbox } from 'antd';
 import { ColumnModel, DataSourceModel, Catalog } from './models';
@@ -61,11 +60,6 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
     if (colKey === 'razn_nak_id') {
       updatedData[rowIndex].razn_nak_name = getCatalogValue('razn_nak_id', value);
     }
-  
-    // Убираем null, если вдруг они появились
-    // const cleanedData: DataSourceModel[] = updatedData.filter(
-    //   (item): item is DataSourceModel => item !== null
-    // );
     
   
     setEditedData(updatedData);
@@ -245,8 +239,9 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
         dataSource={editedData}
         columns={antColumns}
         rowKey="key"
-        // rowKey={(record) => String(record.key || record.id)}
         bordered={false}
+        scroll={{ y: 400 }}
+        pagination={false}
         onRow={(record) => ({
           onClick: () => handleRowClick(record),
           onMouseEnter: () => onRowHover(record.info),

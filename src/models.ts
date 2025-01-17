@@ -67,3 +67,11 @@ export interface ApiResponse {
   };
   operation: string;
 }
+
+export interface ColumnModel {
+  title: string;
+  dataIndex: string;
+  key: string;
+  data_type?: string;
+  width?: number;  // Добавлено свойство ширины
+}
