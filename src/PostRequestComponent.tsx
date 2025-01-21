@@ -1,9 +1,11 @@
+
 import React, { useState } from 'react';
 import axios from 'axios';
 import type { ApiResponse, ColumnModel, DataSourceModel, Catalog } from './models';
 import DynamicTable from './DynamicTable';
-import TableWithInfo from './TableWithInfo';
 import { Button, message } from 'antd';
+
+
 
 const PostRequestComponent: React.FC = () => {
   const [columns, setColumns] = useState<ColumnModel[]>([]);
@@ -354,19 +356,20 @@ const handleDataChange = (updatedData: DataSourceModel[]) => {
       {error && <div style={{ color: 'red' }}>{error}</div>}
 
       {catalog && columns.length > 0 && (
-        <TableWithInfo
-          data={data}
-          columns={columns}
-          catalog={catalog}
-          onDataChange={handleDataChange}
-          onRowSelect={(key) => setSelectedRowKey(key)}
-          selectedRowKey={selectedRowKey}
-          onRowDoubleClick={handleRowDoubleClick}
-        />
+      <DynamicTable
+      data={data}
+      columns={columns}
+      catalog={catalog}
+      onDataChange={handleDataChange}
+      onRowSelect={(key) => setSelectedRowKey(key)}
+      selectedRowKey={selectedRowKey}
+      onRowDoubleClick={handleRowDoubleClick}
+      onRowHover={() => {}}
+    />
       )}
     </div>
  
   );
 };
 
-export default PostRequestComponent;     
+export default PostRequestComponent;   

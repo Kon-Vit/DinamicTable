@@ -74,4 +74,15 @@ export interface ColumnModel {
   key: string;
   data_type?: string;
   width?: number;  // Добавлено свойство ширины
+  render?: (value: any, record: DataSourceModel, index: number) => React.ReactNode;
+}
+
+export interface CatalogItem {
+  key?: number;
+  fio_key?: number;
+  name?: string;
+  fio?: string;
+  t_t?: string;
+  shabl_name?: string;
+  name_ak?: string;
 }
